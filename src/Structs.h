@@ -43,11 +43,7 @@ struct L298N_PWM
 
 struct IR_Sensor
 {
-    int in1; // Receberá o 8
-    int in2; // Receberá o 9
-    int in3; // Receberá o 10
-    int in4; // Receberá o 11
-    int in5; // Receberá o 12
+    int channels[5];
 };
 
 #endif // STRUCTS_H
