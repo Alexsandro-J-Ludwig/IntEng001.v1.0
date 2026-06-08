@@ -8,7 +8,7 @@ Definição da estrutura de dados para controle dos motores utilizando o driver 
     - motorA - Pinos de controle do Motor A (Motor Esquerdo).
     - motorB - Pinos de controle do Motor B (Motor Direito).
 
-- pwm - Estrutura para armazenar os pinos de controle de velocidade (ENA, ENB).
+- pwm - Estrutura para armazenar os pinos de controlfeat: PWM controller with predictive brake and fix logic bugs and pinse de velocidade (ENA, ENB).
 
 - sensor IR - Estrutura para armazenar os pinos dos sensores infravermelhos (IR1).
 
