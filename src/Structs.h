@@ -29,20 +29,43 @@ IR_Sensor ir[] = {
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-struct L298N_Motor
-{
-    int motorA; // Pino de controle do Motor A (IN1 e IN2)
-    int motorB; // Pino de controle do Motor B (IN3 e IN4)
+enum Chassi_Direcao {
+    FRENTE,
+    PARAR,
+    ESQUERDA,
+    DIREITA,
+    EXTRA_ESQUERDA,
+    EXTRA_DIREITA
 };
 
-struct L298N_PWM
+union L298N_Motor
 {
-    int enA;
-    int enB;
+    struct {
+        int motorA_in1; // Pino de controle do Motor A (IN1 e IN2)
+        int motorA_in2; // Pino de controle do Motor A (IN1 e IN2)
+        int motorB_in1; // Pino de controle do Motor B (IN3 e IN4)
+        int motorB_in2; // Pino de controle do Motor B (IN3 e IN4)
+    };
+    int pins[4];
 };
 
-struct IR_Sensor
+union L298N_PWM
 {
+    struct {
+        int enA; // Pino de controle de velocidade do Motor A (ENA)
+        int enB; // Pino de controle de velocidade do Motor B (ENB)
+    };
+    int pins[2];
+};
+
+union IR_Sensor {
+    struct {
+        int ir1; // Pino do sensor IR 1
+        int ir2; // Pino do sensor IR 2
+        int ir3; // Pino do sensor IR 3
+        int ir4; // Pino do sensor IR 4
+        int ir5; // Pino do sensor IR 5
+    };
     int channels[5];
 };
 
