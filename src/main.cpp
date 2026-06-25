@@ -24,6 +24,9 @@ IR_Sensor ir = {{26, 27, 14, 33, 13}};
 
 Chassi_Direcao sentido = Chassi_Direcao::PARAR;
 
+bool curva_direita = false;
+bool curva_esquerda = false;
+
 unsigned long lastMoveTime = 0;        // Variável para armazenar o tempo da última movimentação
 const unsigned long moveInterval = 10; // Intervalo de movimentação em milissegundos
 
@@ -62,37 +65,51 @@ void loop()
         (digitalRead(ir.channels[3]) << 1) |
         (digitalRead(ir.channels[4]) << 0)};
 
+    if (irValues == 0b11011) {
+      if (curva_esquerda)
+        irValues = 0b00011;
+    else if (curva_direita)
+        irValues = 0b11000;
+    } else {
+      curva_esquerda = false;
+      curva_direita = false;
+    }
+
     switch (irValues)
     {
-    case (0b00100):
-    case (0b01100):
-    case (0b00110):
+    case (0b11011):
+    case (0b10011):
+    case (0b11001):
       sentido = Chassi_Direcao::FRENTE;
-      mover(200, 200, sentido, lastMoveTime);
+      mover(sentido, lastMoveTime);
       break;
-    case (0b01000):
+    case (0b10111):
       sentido = Chassi_Direcao::ESQUERDA;
-      mover(100, 200, sentido, lastMoveTime);
+      mover(sentido, lastMoveTime);
       break;
-    case (0b00010):
+    case (0b11101):
       sentido = Chassi_Direcao::DIREITA;
-      mover(200, 100, sentido, lastMoveTime);
+      mover(sentido, lastMoveTime);
       break;
-    case (0b10000):
-    case (0b11000): 
-    case (0b11100):
-      sentido = Chassi_Direcao::EXTRA_ESQUERDA;
-      mover(50, 200, sentido, lastMoveTime);
-      break;
-    case (0b00001):
+    case (0b01111):
+    case (0b00111): 
     case (0b00011):
-    case (0b00111):
-      sentido = Chassi_Direcao::EXTRA_DIREITA;
-      mover(200, 50, sentido, lastMoveTime);
+      sentido = Chassi_Direcao::EXTRA_ESQUERDA;
+      curva_esquerda = true;
+      curva_direita = false;
+      mover(sentido, lastMoveTime);
       break;
-    default:
+    case (0b11110):
+    case (0b11100):
+    case (0b11000):
+      sentido = Chassi_Direcao::EXTRA_DIREITA;
+      curva_direita = true;
+      curva_esquerda = false;
+      mover(sentido, lastMoveTime);
+      break;
+    case (0b00000):
       sentido = Chassi_Direcao::PARAR;
-      mover(0, 0, sentido, lastMoveTime);
+      mover(sentido, lastMoveTime);
       break;
     }
   }

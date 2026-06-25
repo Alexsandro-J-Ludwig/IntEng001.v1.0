@@ -79,7 +79,7 @@ void setSpeed(
     }
 }
 
-void mover(int enA, int enB, Chassi_Direcao sentido, unsigned long msT)
+void mover(Chassi_Direcao sentido, unsigned long msT)
 {
     switch (sentido)
     {
