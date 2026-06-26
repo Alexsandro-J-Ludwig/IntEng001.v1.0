@@ -9,7 +9,8 @@ enum Chassi_Direcao {
     EXTRA_ESQUERDA,
     EXTRA_DIREITA,
     CURVE_ESQUERDA,
-    CURVE_DIREITA
+    CURVE_DIREITA,
+    FORA_LINHA
 };
 
 union L298N_Motor

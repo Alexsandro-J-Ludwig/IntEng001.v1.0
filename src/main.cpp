@@ -23,12 +23,15 @@ Motor motor_b = {
 IR_Sensor ir = {{26, 27, 14, 33, 13}};
 
 Chassi_Direcao sentido = Chassi_Direcao::PARAR;
+Chassi_Direcao ultimaDirecao = Chassi_Direcao::PARAR;
 
 bool curva_direita = false;
 bool curva_esquerda = false;
+bool recuperacao = false;
 
 unsigned long lastMoveTime = 0;        // Variável para armazenar o tempo da última movimentação
 const unsigned long moveInterval = 10; // Intervalo de movimentação em milissegundos
+unsigned long fora_linha_tempo = 0;
 
 void setup()
 {
@@ -65,10 +68,18 @@ void loop()
         (digitalRead(ir.channels[3]) << 1) |
         (digitalRead(ir.channels[4]) << 0)};
 
+    if (recuperacao) {
+      if (irValues != 0b11111) {
+        recuperacao = false;
+      } else {
+        irValues = 0b11111;
+      }
+    }
+
     if (irValues == 0b11011) {
       if (curva_esquerda)
         irValues = 0b00011;
-    else if (curva_direita)
+      else if (curva_direita)
         irValues = 0b11000;
     } else {
       curva_esquerda = false;
@@ -94,6 +105,7 @@ void loop()
     case (0b01111):
     case (0b00111): 
     case (0b00011):
+    case (0b00001):
       sentido = Chassi_Direcao::EXTRA_ESQUERDA;
       curva_esquerda = true;
       curva_direita = false;
@@ -102,6 +114,7 @@ void loop()
     case (0b11110):
     case (0b11100):
     case (0b11000):
+    case (0b10000):
       sentido = Chassi_Direcao::EXTRA_DIREITA;
       curva_direita = true;
       curva_esquerda = false;
@@ -110,6 +123,14 @@ void loop()
     case (0b00000):
       sentido = Chassi_Direcao::PARAR;
       mover(sentido, lastMoveTime);
+      break;
+    case (0b11111):
+      ultimaDirecao = sentido;
+      sentido = Chassi_Direcao::FORA_LINHA;
+      recuperacao = true;
+
+      mover(sentido, lastMoveTime);
+
       break;
     }
   }
