@@ -1,49 +1,57 @@
-/*
-==================================================================
-IntEng001 - Controle de Motores com L298N e ESP32
-==================================================================
-
-Definição da estrutura de dados para controle dos motores utilizando o driver L298N, e a configuração dos pinos físicos conectados ao ESP32.
-- motores - Estrutura para armazenar os pinos de controle dos motores (IN1, IN2, IN3, IN4).
-    - motorA - Pinos de controle do Motor A (Motor Esquerdo).
-    - motorB - Pinos de controle do Motor B (Motor Direito).
-
-- pwm - Estrutura para armazenar os pinos de controlfeat: PWM controller with predictive brake and fix logic bugs and pinse de velocidade (ENA, ENB).
-
-- sensor IR - Estrutura para armazenar os pinos dos sensores infravermelhos (IR1).
-
-Exemplo de declaração e uso das estruturas:
-L298N_Motor driver[] = {
-    {2, 3}, // exemplo Motor Esquerdo: IN1 = 2, IN2 = 3
-    {4, 5}  // exemplo Motor Direito: IN3 = 4, IN4 = 5
-};
-
-L298N_PWM pwm = {6, 7}; // ENA = 6, ENB = 7
-
-IR_Sensor ir[] = {
-  {8, 9, 10, 11, 12}
-};
-
-*/
-
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-struct L298N_Motor
+union L298N_Motor
 {
-    int motorA; // Pino de controle do Motor A (IN1 e IN2)
-    int motorB; // Pino de controle do Motor B (IN3 e IN4)
+    struct {
+        int motorA_in1;
+        int motorA_in2;
+        int motorB_in1;
+        int motorB_in2;
+    } p;
+    int pins[4];
 };
 
-struct L298N_PWM
+union L298N_PWM
 {
-    int enA;
-    int enB;
+    struct {
+        int enA;
+        int enB;
+    } p;
+    int pins[2];
 };
 
-struct IR_Sensor
-{
+struct Motor {
+    L298N_Motor driver;
+    L298N_PWM pwm;
+    int pwm_atual;
+};
+
+union IR_Sensor {
+    struct {
+        int ir1;
+        int ir2;
+        int ir3;
+        int ir4;
+        int ir5;
+    } s;
     int channels[5];
+};
+
+union Buzzer {
+    struct {
+        int pin;
+        int frequence;
+    } b;
+    int out[2];
+};
+
+union Led {
+    struct {
+        int l_esquerda;
+        int l_direita;
+    } l;
+    int out[2];
 };
 
 #endif // STRUCTS_H

@@ -1,111 +1,168 @@
-  /*
-  ===================================================================
-  DOCUMENTAÇÃO DE USO DO COMPONENTE PONTE H L298N
-  ===================================================================
+#include <Arduino.h>
+#include "Structs.h"
+#include "Mover.h"
+extern float distAntiga;
 
-  Definição dos pinos físicos conectados ao ESP32 para controle dos motores e do PWM:
-  - Driver 0 (Motor Esquerdo): Pino 2 (motorA[0]) e Pino 3 (motorA[1])
-  - Driver 1 (Motor Direito) : Pino 4 (motorA[2]) e Pino 5 (motorB[0])
-  - PWM (Velocidade) : Pino 25 (ENA) e Pino 16 (ENB)
-  - Sensor IR        : Pinos 13, 33, 14, 27, 26
+// INSTÂNCIAS GLOBAIS
+Motor motor_a = {
+    {{25, 32, 0, 0}},
+    {{4, 0}},
+    0};
 
-  -------------------------------------------------------------------
-  TABELA DE MOVIMENTAÇÃO (Exemplos Práticos para o loop):
-  -------------------------------------------------------------------
+Motor motor_b = {
+    {{0, 0, 18, 17}},
+    {{0, 16}},
+    0};
 
-  1. MOVER PARA FRENTE:
-    digitalWrite(driver[0].motorA, HIGH);
-    digitalWrite(driver[0].motorB, LOW);
-    digitalWrite(driver[1].motorA, HIGH);
-    digitalWrite(driver[1].motorB, LOW);
-    analogWrite(pwm.enA, 200); // Velocidade motor esquerdo
-    analogWrite(pwm.enB, 200); // Velocidade motor direito
+IR_Sensor ir = {{26, 27, 14, 33, 13}};
 
-  2. MOVER PARA TRÁS:
-    digitalWrite(driver[0].motorA, LOW);
-    digitalWrite(driver[0].motorB, HIGH);
-    digitalWrite(driver[1].motorA, LOW);
-    digitalWrite(driver[1].motorB, HIGH);
+Buzzer buzzer = {{21, 0}};
 
-  3. GIRAR PARA DIREITA:
-    digitalWrite(driver[0].motorA, HIGH);
-    digitalWrite(driver[0].motorB, LOW);
-    digitalWrite(driver[1].motorA, LOW);
-    digitalWrite(driver[1].motorB, HIGH);
+Led led = {{23, 22}};
 
-  4. GIRAR PARA ESQUERDA:
-    digitalWrite(driver[0].motorA, LOW);
-    digitalWrite(driver[0].motorB, HIGH);
-    digitalWrite(driver[1].motorA, HIGH);
-    digitalWrite(driver[1].motorB, LOW);
-  */
+const int BOTAO_START = 0;
 
-  #include <Arduino.h>
-  #include "Structs.h"
-  #include "Mover.h"
+unsigned long lastMoveTime = 0;
+const unsigned long moveInterval = 10;
 
-  // INSTÂNCIAS GLOBAIS
-  L298N_Motor driver[] = {
-      {21, 19},
-      {18, 17}};
-    
-  L298N_PWM pwm = {25, 16};
+const int BUZZER_BOOT    = 1000;
+const int BUZZER_CHEGADA = 2000;
+const int BUZZER_PERDIDO =  500;
 
-  IR_Sensor ir = {{13, 33, 14, 27, 26}};
+bool bipouPerdido = false;
+bool bipouChegada = false;
 
-  void setup()
+void setup()
+{
+  pinMode(BOTAO_START, INPUT_PULLUP);
+
+  pinMode(motor_a.driver.p.motorA_in1, OUTPUT);
+  pinMode(motor_a.driver.p.motorA_in2, OUTPUT);
+  pinMode(motor_b.driver.p.motorB_in1, OUTPUT);
+  pinMode(motor_b.driver.p.motorB_in2, OUTPUT);
+
+  pinMode(motor_a.pwm.p.enA, OUTPUT);
+  pinMode(motor_b.pwm.p.enB, OUTPUT);
+
+  for (int i = 0; i < 5; i++)
   {
-    // Configuração automática de todos os pinos de sentido como SAÍDA
-    for (int i = 0; i < 2; i++)
-    {
-      pinMode(driver[i].motorA, OUTPUT);
-      pinMode(driver[i].motorB, OUTPUT);
-    }
-
-    // Configuração dos pinos de PWM como SAÍDA
-    pinMode(pwm.enA, OUTPUT);
-    pinMode(pwm.enB, OUTPUT);
-
-    for (int i = 0; i < 5; i++)
-    {
-      pinMode(ir.channels[i], INPUT);
-    }
-
-    // Inicia a comunicação serial para monitoramento
-    Serial.begin(9600);
+    pinMode(ir.channels[i], INPUT);
   }
 
-  void loop()
+  pinMode(buzzer.b.pin, OUTPUT);
+  pinMode(led.l.l_direita, OUTPUT);
+  pinMode(led.l.l_esquerda, OUTPUT);
+
+  Serial.begin(9600);
+
+  // Bipe de boot
+  tone(buzzer.out[0], BUZZER_BOOT, 2000);
+  delay(2000);
+
+  // Aguarda botão
+  while (digitalRead(BOTAO_START) == HIGH) {}
+
+  // Três bipes de largada
+  for (int i = 0; i < 3; i++) {
+    tone(buzzer.out[0], BUZZER_BOOT, 200);
+    delay(400);
+  }
+}
+
+void loop()
+{
+  unsigned long currentTime = millis();
+  if (currentTime - lastMoveTime >= moveInterval)
   {
-    int irValues[5] = {
-        digitalRead(ir.channels[0]),
-        digitalRead(ir.channels[1]),
-        digitalRead(ir.channels[2]),
-        digitalRead(ir.channels[3]),
-        digitalRead(ir.channels[4])};
+    lastMoveTime = currentTime;
 
-  if (irValues[0] == HIGH && irValues[1] == HIGH) 
-    { mover(50,  200, ESQUERDA); 
-  }
-  else if (irValues[3] == HIGH && irValues[4] == HIGH) 
-    { mover(200, 50,  DIREITA);  
-  }
-  else if (irValues[0] == HIGH) 
-    { mover(50,  200, ESQUERDA); 
-  }  
-  else if (irValues[4] == HIGH) 
-    { mover(200, 50,  DIREITA);  
-  } 
-  else if (irValues[1] == HIGH) 
-    { mover(100, 200, ESQUERDA); 
+    // LEDs proporcionais ao desvio
+    int brilho = (int)(abs(distAntiga) / 3.0 * 255);
+
+    if (distAntiga < -0.1)
+    {
+      analogWrite(led.l.l_esquerda, brilho);
+      analogWrite(led.l.l_direita, 0);
     }
-  else if (irValues[3] == HIGH) 
-    { mover(200, 100, DIREITA);  
+    else if (distAntiga > 0.1)
+    {
+      analogWrite(led.l.l_esquerda, 0);
+      analogWrite(led.l.l_direita, brilho);
+    }
+    else
+    {
+      analogWrite(led.l.l_esquerda, 0);
+      analogWrite(led.l.l_direita, 0);
+    }
+
+    int irValues =
+        (digitalRead(ir.channels[0]) << 4) |
+        (digitalRead(ir.channels[1]) << 3) |
+        (digitalRead(ir.channels[2]) << 2) |
+        (digitalRead(ir.channels[3]) << 1) |
+        (digitalRead(ir.channels[4]) << 0);
+
+    switch (irValues)
+    {
+    case (0b11011):
+      mover(0.0, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b10011):
+      mover(-0.75, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b11001):
+      mover(0.75, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b10111):
+      mover(-1.5, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b11101):
+      mover(1.5, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b00111):
+      mover(-2.25, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b11100):
+      mover(2.25, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b01111):
+      mover(-3.00, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b11110):
+      mover(3.0, lastMoveTime);
+      bipouPerdido = false;
+      break;
+    case (0b00000): // Linha de chegada: Freio Dinâmico Ativo
+      digitalWrite(motor_a.driver.p.motorA_in1, LOW);
+      digitalWrite(motor_a.driver.p.motorA_in2, LOW);
+      digitalWrite(motor_b.driver.p.motorB_in1, LOW);
+      digitalWrite(motor_b.driver.p.motorB_in2, LOW);
+      analogWrite(motor_a.pwm.p.enA, 0);
+      analogWrite(motor_b.pwm.p.enB, 0);
+
+      if (!bipouChegada)
+      {
+        tone(buzzer.out[0], BUZZER_CHEGADA, 2000);
+        bipouChegada = true;
+      }
+      break;
+    default:
+      // Perdeu a linha — repete última correção conhecida
+      mover(distAntiga, lastMoveTime);
+      if (!bipouPerdido)
+      {
+        tone(buzzer.out[0], BUZZER_PERDIDO, 200);
+        bipouPerdido = true;
+      }
+      break;
+    }
   }
-  else if (irValues[2] == HIGH) 
-    { mover(200, 200, FRENTE);   
-  }
-  else { 
-    mover(0,   0,   PARAR);    
-  }
-  }
+}
