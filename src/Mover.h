@@ -18,9 +18,9 @@ void setSpeed(
 {
     // PID - ajuste na pista
     const float kP = 25.0;
-    const float kI = 0.3;
-    const float kD = 10.0;
-    const int VEL_BASE = 150;
+    const float kI = 0.15;
+    const float kD = 5.0;
+    const int VEL_BASE = 75;
 
     static bool primeiraExecucao = true;
     if (primeiraExecucao)

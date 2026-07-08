@@ -23,7 +23,7 @@ Led led = {{23, 22}};
 const int BOTAO_START = 0;
 
 unsigned long lastMoveTime = 0;
-const unsigned long moveInterval = 10;
+const unsigned long moveInterval = 5;
 
 const int BUZZER_BOOT    = 1000;
 const int BUZZER_CHEGADA = 2000;
@@ -109,11 +109,11 @@ void loop()
       bipouPerdido = false;
       break;
     case (0b10011):
-      mover(-0.75, lastMoveTime);
+      mover(-0.50, lastMoveTime);
       bipouPerdido = false;
       break;
     case (0b11001):
-      mover(0.75, lastMoveTime);
+      mover(0.50, lastMoveTime);
       bipouPerdido = false;
       break;
     case (0b10111):

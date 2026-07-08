@@ -82,7 +82,7 @@ O ajuste de velocidade dos motores é feito por um controlador PID com base no d
 | Termo | Ganho | Função |
 | :--- | :--- | :--- |
 | **kP** | 25.0 | Corrige proporcionalmente ao desvio atual |
-| **kI** | 0.3 | Corrige offset persistente acumulado |
+| **kI** | 0.15 | Corrige offset persistente acumulado |
 | **kD** | 10.0 | Antecipa variação do desvio |
 | **Base** | 150 | Velocidade base dos motores (0–255) |
 
